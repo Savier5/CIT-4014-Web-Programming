@@ -1,0 +1,26 @@
+<!-- Savier Osman
+10/31/2022
+Refactored program to move nav tag to category_nav view. -->
+
+<?php include '../view/header.php'; ?>
+<main>
+    <aside>
+        <h1>Categories</h1>
+        <?php include '../view/category_nav.php'; ?>
+    </aside>
+    <section>
+        <h1><?php echo $category_name; ?></h1>
+        <ul class="nav">
+            <!-- display links for products in selected category -->
+            <?php foreach ($products as $product) : ?>
+            <li>
+                <a href="?action=view_product&amp;product_id=<?php 
+                          echo $product['productID']; ?>">
+                    <?php echo $product['productName']; ?>
+                </a>
+            </li>
+            <?php endforeach; ?>
+        </ul>
+    </section>
+</main>
+<?php include '../view/footer.php'; ?>
