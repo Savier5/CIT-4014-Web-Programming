@@ -1,0 +1,108 @@
+<?php
+
+// Savier Osman
+// 11/14/2022
+// Modfied the program to convert the dates into objects, format the
+// dates and time, and put in error messages for things that can go wrong
+// when user inputs the dates.
+
+//set default value
+$message = '';
+
+//get value from POST array
+$action = filter_input(INPUT_POST, 'action');
+if ($action === NULL) {
+    $action =  'start_app';
+}
+
+//process
+switch ($action) {
+    case 'start_app':
+
+        // set default invoice date 1 month prior to current date
+        $interval = new DateInterval('P1M');
+        $default_date = new DateTime();
+        $default_date->sub($interval);
+        $invoice_date_s = $default_date->format('n/j/Y');
+
+        // set default due date 2 months after current date
+        $interval = new DateInterval('P2M');
+        $default_date = new DateTime();
+        $default_date->add($interval);
+        $due_date_s = $default_date->format('n/j/Y');
+
+        $message = 'Enter two dates and click on the Submit button.';
+        break;
+    case 'process_data':
+        $invoice_date_s = filter_input(INPUT_POST, 'invoice_date');
+        $due_date_s = filter_input(INPUT_POST, 'due_date');
+
+        // make sure the user enters both dates
+        if (empty($invoice_date_s) || empty($due_date_s)) {
+            $message = 'You must enter both dates. Please try again.';
+            break;
+        }
+
+        // convert date strings to DateTime objects
+        // and use a try/catch to make sure the dates are valid
+        try {
+            $invoice_date_o = new DateTime($invoice_date_s);
+            $due_date_o = new DateTime($due_date_s);
+        }catch (Exception $e) {
+            $message = 'Both dates must be in a valid format. Please check both dates and try again';
+            break;
+        }
+
+        // make sure the due date is after the invoice date
+        if ($due_date_o < $invoice_date_o){
+            $message = 'The due date must come after the invoice date. Please try again.';
+            break;
+        }
+
+        // Set a format string for all dates abd times
+        $europe_date_format = filter_input(INPUT_POST, 'europe_date_format');
+        $short_date_format = filter_input(INPUT_POST, 'short_date_format');
+        $hour_clock_format = filter_input(INPUT_POST, 'hour_clock_format');
+
+        // Outputs the right dates formate depending on what is checked on the check boxes
+        if ($europe_date_format === 'on' && $short_date_format === 'on') {
+            $format_string_date = 'j/m/Y';
+        } else if ($europe_date_format === 'on') {
+            $format_string_date = 'j, F, Y';
+        } else if ($short_date_format === 'on') {
+            $format_string_date = 'm/j/Y';
+        } else {
+            $format_string_date = 'F j, Y';
+        }
+
+        // Formats the time based on if the check box is clicked
+        if ($hour_clock_format === 'on') {
+            $format_string_time = 'H:i:s';
+        }else {
+            $format_string_time = 'g:i:s a';
+        }
+
+        // format both dates
+        $invoice_date_f = $invoice_date_o->format($format_string_date);
+        $due_date_f = $due_date_o->format($format_string_date);
+        
+        // get the current date and time and format it
+        $current_date_o = new DateTime();
+        $current_date_f = $current_date_o->format($format_string_date);
+        $current_time_f = $current_date_o->format($format_string_time);
+        
+        // get the amount of time between the current date and the due date
+        // and format the due date message
+        $time_span = $current_date_o->diff($due_date_o);
+        if ($due_date_o < $current_date_o){
+            $due_date_message = $time_span->format(
+                'This invoice is %y years, %m months, and %d days overdue.');
+        } else {
+            $due_date_message = $time_span->format(
+                'This invoice is due in %y years, %m months, and %d days.');
+        }
+
+        break;
+}
+include 'date_tester.php';
+?>
